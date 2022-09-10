@@ -15,5 +15,3 @@
 
 node_modules
 #!include:.gitignore
-
-test.sh

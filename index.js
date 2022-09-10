@@ -33,7 +33,7 @@ async function fetchRepositories(
   const resultRepositories = result.search.edges.map((edge) => edge.node)
 
   repositories.push(...resultRepositories)
-  
+
   if (result.search.pageInfo.hasNextPage) {
     await fetchRepositories(graphql, {
       repositories,
@@ -44,6 +44,7 @@ async function fetchRepositories(
   return repositories
 }
 
-functions.cloudEvent('getRepositories', async (cloudEvent) => {
+functions.http('getRepositories', async (req, res) => {
   const repositories = await fetchRepositories(graphqlWithAuth)
+  res.send('OK')
 })

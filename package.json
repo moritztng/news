@@ -9,7 +9,7 @@
   },
   "scripts": {
     "watch": "npm-watch start",
-    "start": "node -r dotenv/config node_modules/.bin/functions-framework --target=getRepositories [--signature-type=cloudevent]"
+    "start": "node -r dotenv/config node_modules/.bin/functions-framework --target=getRepositories"
   },
   "dependencies": {
     "@google-cloud/functions-framework": "^3.1.2",
