@@ -1,7 +1,6 @@
 {
   "main": "index.js",
   "devDependencies": {
-    "@google-cloud/functions-framework": "^3.1.2",
     "dotenv": "^16.0.2",
     "npm-watch": "^0.11.0"
   },
@@ -13,6 +12,7 @@
     "start": "node -r dotenv/config node_modules/.bin/functions-framework --target=getRepositories [--signature-type=cloudevent]"
   },
   "dependencies": {
+    "@google-cloud/functions-framework": "^3.1.2",
     "@octokit/graphql": "^5.0.1"
   },
   "name": "news"
