@@ -1,4 +1,5 @@
 const functions = require('@google-cloud/functions-framework')
+const { BigQuery} = require('@google-cloud/bigquery')
 const { graphql } = require('@octokit/graphql')
 
 const graphqlWithAuth = graphql.defaults({
@@ -17,7 +18,11 @@ const QUERY = `
       edges {
         node {
           ... on Repository {
+            owner {
+              login
+            }
             name
+            stargazerCount
           }
         }
       }
@@ -44,7 +49,11 @@ async function fetchRepositories(
   return repositories
 }
 
+const bigquery = new BigQuery()
+
 functions.http('getRepositories', async (req, res) => {
   const repositories = await fetchRepositories(graphqlWithAuth)
+  const time = bigquery.datetime(new Date().toISOString())
+  await bigquery.dataset('github_repositories').table('repositories').insert(repositories.map((repository) => ({time: time, owner: repository.owner.login, name: repository.name, stargazerCount: repository.stargazerCount})))
   res.send('OK')
 })
