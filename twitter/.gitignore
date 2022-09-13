@@ -1,0 +1,5 @@
+*.pyc
+env
+.env
+.vscode
+service-account.json
