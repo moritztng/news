@@ -79,8 +79,6 @@ functions.http('getRepositories', async (req, res) => {
   
   const time = bigquery.datetime(new Date().toISOString())
   
-  console.log(repositories.length)
-
   await bigquery
     .dataset('github_repositories')
     .table('repositories')
