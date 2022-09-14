@@ -20,6 +20,9 @@ const QUERY = `
           ... on Repository {
             owner {
               login
+              ... on User {
+                twitterUsername
+              }
             }
             name
             stargazerCount
@@ -86,6 +89,7 @@ functions.http('getRepositories', async (req, res) => {
       repositories.map((repository) => ({
         time: time,
         owner: repository.owner.login,
+        twitter: repository.owner.twitterUsername,
         name: repository.name,
         stargazerCount: repository.stargazerCount,
       }))
