@@ -42,16 +42,13 @@ async function fetchRepositories(
   const searchQuery = `is:public stars:${minStars}..${maxStars} sort:stars-asc`
   const result = await graphql(QUERY, { cursor, searchQuery: searchQuery })
   const resultRepositories = result.search.edges.map((edge) => edge.node)
-
   repositories.push(...resultRepositories)
-
   if (result.search.pageInfo.hasNextPage) {
     await fetchRepositories(graphql, minStars, maxStars, {
       repositories,
       cursor: result.search.pageInfo.endCursor,
     })
   }
-
   return repositories
 }
 
