@@ -35,7 +35,4 @@ def tweet(request):
             f"https://github.com/{repository['owner']}/{repository['name']}"
         )
         tweet_id = tweepy_client.create_tweet(text=tweet_text, in_reply_to_tweet_id=tweet_id).data['id']
-        if repository['twitter']:
-            twitter_id = tweepy_client.get_user(username=repository['twitter'])
-            tweepy_client.follow_user(twitter_id)
     return ''
