@@ -6,9 +6,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 bigquery_client = bigquery.Client()
-
 query = f"""
-    SELECT owner, name, stargazerCount, stargazerCount - LAG(stargazerCount)
+    SELECT owner, twitter, name, stargazerCount, stargazerCount - LAG(stargazerCount)
     OVER (PARTITION BY owner, name ORDER BY time) AS stargazerGrowth
     FROM `github_repositories.repositories`
     ORDER BY stargazerGrowth DESC
@@ -27,11 +26,16 @@ def tweet(request):
     repositories = bigquery_client.query(query)
     tweet_id = None
     for repository in repositories:
+        twitter_username_text = '@' + repository['twitter'] + '\n' if repository['twitter'] else '' 
         tweet_text = (
             f"{repository['owner']}/{repository['name']} 🎉\n"
             f"{repository['stargazerGrowth']} 🌟 today\n"
             f"{repository['stargazerCount']} 🌟 total\n"
+            f"{twitter_username_text}"
             f"https://github.com/{repository['owner']}/{repository['name']}"
         )
         tweet_id = tweepy_client.create_tweet(text=tweet_text, in_reply_to_tweet_id=tweet_id).data['id']
+        if repository['twitter']:
+            twitter_id = tweepy_client.get_user(username=repository['twitter'])
+            tweepy_client.follow_user(twitter_id)
     return ''
