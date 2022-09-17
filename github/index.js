@@ -54,41 +54,40 @@ async function fetchRepositories(
 
 const bigquery = new BigQuery()
 
-functions.http('getRepositories', async (req, res) => {
+exports.getRepositories = async (eventData, context, callback) => {
+  const query = `
+    SELECT stargazerCount
+    FROM \`github_repositories.repositories\`
+    WHERE time > '${new Date().toISOString().split('T')[0]}'
+    ORDER BY stargazerCount DESC
+    LIMIT 1
+  `
+
+  const [job] = await bigquery.createQueryJob({ query: query, location: 'US' })
+  const [[row]] = await job.getQueryResults()
   const maxStars = parseInt(process.env.MAX_STARS)
-  let minStars = parseInt(process.env.MIN_STARS)
-  let repositories = []
-  let repositoriesSlice = []
-  do {
-    repositoriesSlice = await fetchRepositories(
-      graphqlWithAuth,
-      minStars,
-      maxStars
-    )
-    repositories = repositories.concat(repositoriesSlice)
-    minStars = repositories[repositories.length - 1].stargazerCount
-  } while (repositoriesSlice.length >= 1000)
-  
-  repositories = repositories.filter(
-    (value, index, self) =>
-      index ===
-      self.findIndex(
-        (t) => t.owner.login === value.owner.login && t.name === value.name
-      )
+  let minStars = row ? row.stargazerCount : parseInt(process.env.MIN_STARS)
+  const repositories = await fetchRepositories(
+    graphqlWithAuth,
+    minStars,
+    maxStars
   )
   
-  const time = bigquery.datetime(new Date().toISOString())
+  if (repositories.length > 0) {
+    const time = bigquery.datetime(new Date().toISOString())
+    await bigquery
+      .dataset('github_repositories')
+      .table('repositories')
+      .insert(
+        repositories.map((repository) => ({
+          time: time,
+          owner: repository.owner.login,
+          twitter: repository.owner.twitterUsername,
+          name: repository.name,
+          stargazerCount: repository.stargazerCount,
+        }))
+      )
+  }
   
-  await bigquery
-    .dataset('github_repositories')
-    .table('repositories')
-    .insert(
-      repositories.map((repository) => ({
-        time: time,
-        owner: repository.owner.login,
-        twitter: repository.owner.twitterUsername,
-        name: repository.name,
-        stargazerCount: repository.stargazerCount,
-      }))
-    )
-})
+  callback(repositories.length < 1000 ? null : 'page limit')
+}
