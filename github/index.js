@@ -72,7 +72,7 @@ exports.getRepositories = async (eventData, context, callback) => {
     minStars,
     maxStars
   )
-  
+
   if (repositories.length > 0) {
     const time = bigquery.datetime(new Date().toISOString())
     await bigquery
@@ -88,6 +88,6 @@ exports.getRepositories = async (eventData, context, callback) => {
         }))
       )
   }
-  
+
   callback(repositories.length < 1000 ? null : 'page limit')
 }
