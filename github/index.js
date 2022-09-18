@@ -1,4 +1,5 @@
 const { BigQuery } = require('@google-cloud/bigquery')
+const { PubSub } = require('@google-cloud/pubsub')
 const { graphql } = require('@octokit/graphql')
 
 const graphqlWithAuth = graphql.defaults({
@@ -58,6 +59,10 @@ const repositoriesTable = dataset.table('repositories')
 
 const maxStars = parseInt(process.env.MAX_STARS)
 
+const pubsubTopic = new PubSub({ projectId: 'news-361012' }).topic(
+  'fetched-github'
+)
+
 exports.getRepositories = async (eventData, context, callback) => {
   const query = `
     SELECT stargazerCount
@@ -106,6 +111,7 @@ exports.getRepositories = async (eventData, context, callback) => {
       query: 'DELETE FROM `github_repositories.cache` WHERE true',
       location: 'US',
     })
+    await pubsubTopic.publishMessage({ data: Buffer.from('fetched github') })
     callback()
   } else {
     callback('page limit')
