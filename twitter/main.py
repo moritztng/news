@@ -1,4 +1,4 @@
-import functions_framework, tweepy
+import tweepy
 from google.cloud import bigquery
 from os import environ
 from dotenv import load_dotenv
@@ -22,8 +22,7 @@ tweepy_client = tweepy.Client(
     access_token_secret=environ['ACCESS_TOKEN_SECRET'],
 )
 
-@functions_framework.http
-def tweet(request):
+def tweet(event_data, context):
     repositories = bigquery_client.query(query)
     tweet_id = None
     for repository in repositories:
