@@ -7,9 +7,10 @@ load_dotenv()
 
 bigquery_client = bigquery.Client()
 query = f"""
-    SELECT owner, twitter, name, stargazerCount, stargazerCount - LAG(stargazerCount)
-    OVER (PARTITION BY owner, name ORDER BY time) AS stargazerGrowth
+    SELECT owner, twitter, name, stargazerCount,
+    stargazerCount - LAG(stargazerCount) OVER (PARTITION BY owner, name ORDER BY time) AS stargazerGrowth
     FROM `github_repositories.repositories`
+    WHERE time > DATETIME_SUB(CURRENT_DATETIME(), INTERVAL 2 DAY)
     ORDER BY stargazerGrowth DESC
     LIMIT {environ['NUMBER_REPOSITORIES']}
 """
