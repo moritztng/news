@@ -107,10 +107,9 @@ exports.getRepositories = async (eventData, context, callback) => {
       destination: repositoriesTable,
       writeDisposition: 'WRITE_APPEND',
     })
-    await bigquery.createQueryJob({
-      query: 'DELETE FROM `github_repositories.cache` WHERE true',
-      location: 'US',
-    })
+    const [{ schema }] = await cacheTable.getMetadata()
+    await cacheTable.delete()
+    dataset.createTable('cache', { schema, location: 'US' })
     await pubsubTopic.publishMessage({ data: Buffer.from('fetched github') })
     callback()
   } else {
