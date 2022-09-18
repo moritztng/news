@@ -1,4 +1,3 @@
-const functions = require('@google-cloud/functions-framework')
 const { BigQuery } = require('@google-cloud/bigquery')
 const { graphql } = require('@octokit/graphql')
 
@@ -53,20 +52,26 @@ async function fetchRepositories(
 }
 
 const bigquery = new BigQuery()
+const dataset = bigquery.dataset('github_repositories')
+const cacheTable = dataset.table('cache')
+const repositoriesTable = dataset.table('repositories')
+
+const maxStars = parseInt(process.env.MAX_STARS)
 
 exports.getRepositories = async (eventData, context, callback) => {
   const query = `
     SELECT stargazerCount
-    FROM \`github_repositories.repositories\`
-    WHERE time > '${new Date().toISOString().split('T')[0]}'
+    FROM \`github_repositories.cache\`
     ORDER BY stargazerCount DESC
     LIMIT 1
   `
-
-  const [job] = await bigquery.createQueryJob({ query: query, location: 'US' })
+  const [job] = await bigquery.createQueryJob({
+    query: query,
+    location: 'US',
+  })
   const [[row]] = await job.getQueryResults()
-  const maxStars = parseInt(process.env.MAX_STARS)
-  let minStars = row ? row.stargazerCount : parseInt(process.env.MIN_STARS)
+  const minStars = row ? row.stargazerCount : parseInt(process.env.MIN_STARS)
+
   const repositories = await fetchRepositories(
     graphqlWithAuth,
     minStars,
@@ -75,19 +80,34 @@ exports.getRepositories = async (eventData, context, callback) => {
 
   if (repositories.length > 0) {
     const time = bigquery.datetime(new Date().toISOString())
-    await bigquery
-      .dataset('github_repositories')
-      .table('repositories')
-      .insert(
-        repositories.map((repository) => ({
-          time: time,
-          owner: repository.owner.login,
-          twitter: repository.owner.twitterUsername,
-          name: repository.name,
-          stargazerCount: repository.stargazerCount,
-        }))
-      )
+    await cacheTable.insert(
+      repositories.map((repository) => ({
+        time: time,
+        owner: repository.owner.login,
+        twitter: repository.owner.twitterUsername,
+        name: repository.name,
+        stargazerCount: repository.stargazerCount,
+      }))
+    )
   }
 
-  callback(repositories.length < 1000 ? null : 'page limit')
+  if (repositories.length < 1000) {
+    const query = `
+      SELECT DISTINCT *
+      FROM \`github_repositories.cache\`
+    `
+    await bigquery.createQueryJob({
+      query: query,
+      location: 'US',
+      destination: repositoriesTable,
+      writeDisposition: 'WRITE_APPEND',
+    })
+    await bigquery.createQueryJob({
+      query: 'DELETE FROM `github_repositories.cache` WHERE true',
+      location: 'US',
+    })
+    callback()
+  } else {
+    callback('page limit')
+  }
 }
