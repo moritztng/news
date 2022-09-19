@@ -98,7 +98,7 @@ exports.getRepositories = async (eventData, context, callback) => {
 
   if (repositories.length < 1000) {
     const query = `
-      SELECT * 
+      SELECT time, owner, twitter, name, stargazerCount
       FROM (
         SELECT time, owner, twitter, name, stargazerCount, ROW_NUMBER() OVER (PARTITION BY owner, name ORDER BY time DESC) as row 
         FROM \`github_repositories.cache\`
