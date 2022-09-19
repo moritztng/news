@@ -98,8 +98,9 @@ exports.getRepositories = async (eventData, context, callback) => {
 
   if (repositories.length < 1000) {
     const query = `
-      SELECT DISTINCT *
+      SELECT MAX(time), owner, twitter, name, stargazerCount
       FROM \`github_repositories.cache\`
+      GROUP BY owner, name
     `
     await bigquery.createQueryJob({
       query: query,
