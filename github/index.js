@@ -65,10 +65,12 @@ const pubsubTopic = new PubSub({ projectId: 'news-361012' }).topic(
 
 exports.getRepositories = async (eventData, context, callback) => {
   const query = `
-    SELECT stargazerCount
-    FROM \`github_repositories.cache\`
-    ORDER BY stargazerCount DESC
-    LIMIT 1
+      SELECT * 
+      FROM (
+        SELECT time, owner, twitter, name, stargazerCount, ROW_NUMBER() OVER (PARTITION BY owner, name ORDER BY time DESC) as row 
+        FROM \`github_repositories.cache\`
+      )
+      WHERE row=1
   `
   const [job] = await bigquery.createQueryJob({
     query: query,
