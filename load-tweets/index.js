@@ -4,8 +4,8 @@ export async function getTweets(eventData, context, callback) {
   const startTime = new Date()
   const endTime = new Date()
 
-  startTime.setMinutes(startTime.getMinutes() - 10)
-  endTime.setHours(endTime.getHours() - 24)
+  startTime.setHours(endTime.getHours() - 24)
+  endTime.setMinutes(startTime.getMinutes() - 10)
 
   const body = {
     recentSearch: {
