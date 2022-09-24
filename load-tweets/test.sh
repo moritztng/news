@@ -18,7 +18,7 @@ curl localhost:8080 \
         "data": {
           "@type": "type.googleapis.com/google.pubsub.v1.PubsubMessage",
           "attributes": {
-             "attr1":"attr1-value"
+             "query":"bigquery"
           },
           "data": "d29ybGQ="
         }
