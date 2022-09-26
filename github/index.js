@@ -114,7 +114,7 @@ exports.getRepositories = async (eventData, context, callback) => {
     /*const [{ schema }] = await cacheTable.getMetadata()
     await cacheTable.delete()
     dataset.createTable('cache', { schema, location: 'US' })*/
-    await pubsubTopic.publishMessage({ data: Buffer.from('fetched github') })
+    //await pubsubTopic.publishMessage({ data: Buffer.from('fetched github') })
     callback()
   } else {
     callback('page limit')
